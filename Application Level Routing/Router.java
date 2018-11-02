@@ -36,32 +36,37 @@ public class Router {
       while (true) {
         Socket socket = listener.accept();
         try {
-          PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
           BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-          //out.println(new Date().toString());
+
           String inputData = input.readLine();
           String data = inputData.substring(5, inputData.indexOf(" "));
           String[] operatorsToVisit = inputData.substring(inputData.indexOf("OPS:") + 4).split(",");
-          System.out.println("data: " + data);
-          System.out.print("operatorsToVisit: ");
+
           for (int i = 0; i < operatorsToVisit.length; i++) {
-            System.out.print(operatorsToVisit[i] + " ");
+            try {
+              Socket operatorSocket = new Socket(getAddress(operatorsToVisit[i]), getPort(operatorsToVisit[i]));
+
+              PrintWriter out = new PrintWriter(operatorSocket.getOutputStream(), true);
+              BufferedReader in = new BufferedReader(new InputStreamReader(operatorSocket.getInputStream()));
+
+              out.println(data);
+              data = in.readLine();
+
+            } finally {
+              operatorSocket.close();
+            }
           }
+
+          PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+          out.println(data);
+
         } finally {
           socket.close();
         }
       }
     }
     finally {
-        listener.close();
+      listener.close();
     }
-
-    /*
-    for (int i = 0; i < operators.length; i++) {
-      System.out.println(operators[i].key +  " " + operators[i].address + " " + operators[i].port);
-    }
-    */
-
-
   }
 }
