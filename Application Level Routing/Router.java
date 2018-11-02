@@ -6,8 +6,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class Router {
-  //java Router 127.0.0.1:9999 A 127.0.0.1:10000 B 127.0.0.1:10001 C 127.0.0.1:10002
-  static Operator[] operators;
+
   static class Operator {
     String key;
     String address;
@@ -33,20 +32,17 @@ public class Router {
     return -1;
   }
 
-  public static int getInd(String key) {
-    for (int i = 0; i < operators.length; i++)
-      if (operators[i].key.equals(key))
-        return i;
-    return -1;
-  }
+  static Operator[] operators;
 
   public static void main(String[] args) throws IOException{
     String[] bindData = args[0].split(":");
     String bindAddress = bindData[0];
-    int bindPort = Integer.parseInt(bindData[1]);
 
+    int bindPort = Integer.parseInt(bindData[1]);
     int operatorSize = 0;
+
     operators = new Operator[(args.length - 1) / 2];
+
     for (int i = 1; i < args.length; i += 2) {
       String key = args[i];
       String[] operatorData = args[i+1].split(":");
@@ -62,12 +58,13 @@ public class Router {
           BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
           String inputData = input.readLine();
-          String data = inputData.substring(5, inputData.indexOf(" "));
+          String data = inputData.substring(0, inputData.indexOf(" "));
           String[] operatorsToVisit = inputData.substring(inputData.indexOf("OPS:") + 4).split(",");
 
-          /*for (int i = 0; i < operatorsToVisit.length; i++) {
+          Socket operatorSocket = null;
+          for (int i = 0; i < operatorsToVisit.length; i++) {
             try {
-              Socket operatorSocket = new Socket(getAddress(operatorsToVisit[i]), getPort(operatorsToVisit[i]));
+              operatorSocket = new Socket(getAddress(operatorsToVisit[i]), getPort(operatorsToVisit[i]));
 
               PrintWriter out = new PrintWriter(operatorSocket.getOutputStream(), true);
               BufferedReader in = new BufferedReader(new InputStreamReader(operatorSocket.getInputStream()));
@@ -75,45 +72,15 @@ public class Router {
               out.println(data);
               data = in.readLine();
 
+            } catch (Exception e) {
+              e.printStackTrace();
             } finally {
               operatorSocket.close();
-            }
-          }*/
-
-          Socket[] operatorSockets = new Socket[operators.length];
-          for (int i = 0; i < operators.length; i++) {
-            try {
-              operatorSockets[i] = new Socket(operators[i].address, operators[i].port);
-            } catch (Exception e) {
-              System.out.println(e);
-            }
-          }
-
-          for (int i = 0; i < operatorsToVisit.length; i++) {
-            try {
-              int socketInd = getInd(operatorsToVisit[i]);
-              PrintWriter out = new PrintWriter(operatorSockets[socketInd].getOutputStream(), true);
-              BufferedReader in = new BufferedReader(new InputStreamReader(operatorSockets[socketInd].getInputStream()));
-
-              out.println(data);
-              data = in.readLine();
-
-            } catch (Exception e) {
-              System.out.println(e);
-            }
-          }
-
-          for (int i = 0; i < operators.length; i++) {
-            try {
-              operatorSockets[i].close();
-            } catch (Exception e) {
-              System.out.println(e);
             }
           }
 
           PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
           out.println(data);
-
         } finally {
           socket.close();
         }

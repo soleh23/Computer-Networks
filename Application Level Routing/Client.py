@@ -41,7 +41,7 @@ BUFFER_SIZE = 1024
 
 number = random.randint(1,50)
 
-number_data = str(number) #f'{number:08}'
+number_data = f'{number:08}'
 print(number_data)
 
 MESSAGE = "DATA:"+number_data+" OPS:A,B,A,D,D,C,E\n" #DATA:0000OPS:ABCDEF...
@@ -57,6 +57,6 @@ print(data.decode())
 
 s.close()
 
-data = data.decode().split("DATA:")[0]
+data = data.decode().split("DATA:")[1]
 print("received data:", data)
 print("expected data:", ((number*17+13)*17-7-7)*11*13)
