@@ -7,6 +7,7 @@ import java.net.Socket;
 
 public class Router {
   //java Router 127.0.0.1:9999 A 127.0.0.1:10000 B 127.0.0.1:10001 C 127.0.0.1:10002
+  static Operator[] operators;
   static class Operator {
     String key;
     String address;
@@ -17,13 +18,28 @@ public class Router {
       this.port = port;
     }
   }
+
+  public static String getAddress(String key) {
+    for (int i = 0; i < operators.length; i++)
+      if (operators[i].key.equals(key))
+        return operators[i].address;
+    return null;
+  }
+
+  public static int getPort(String key) {
+    for (int i = 0; i < operators.length; i++)
+      if (operators[i].key.equals(key))
+        return operators[i].port;
+    return -1;
+  }
+
   public static void main(String[] args) throws IOException{
     String[] bindData = args[0].split(":");
     String bindAddress = bindData[0];
     int bindPort = Integer.parseInt(bindData[1]);
 
     int operatorSize = 0;
-    Operator[] operators = new Operator[(args.length - 1) / 2];
+    operators = new Operator[(args.length - 1) / 2];
     for (int i = 1; i < args.length; i += 2) {
       String key = args[i];
       String[] operatorData = args[i+1].split(":");
