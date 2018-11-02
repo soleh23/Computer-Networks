@@ -33,6 +33,13 @@ public class Router {
     return -1;
   }
 
+  public static int getInd(String key) {
+    for (int i = 0; i < operators.length; i++)
+      if (operators[i].key.equals(key))
+        return i;
+    return -1;
+  }
+
   public static void main(String[] args) throws IOException{
     String[] bindData = args[0].split(":");
     String bindAddress = bindData[0];
@@ -58,7 +65,7 @@ public class Router {
           String data = inputData.substring(5, inputData.indexOf(" "));
           String[] operatorsToVisit = inputData.substring(inputData.indexOf("OPS:") + 4).split(",");
 
-          for (int i = 0; i < operatorsToVisit.length; i++) {
+          /*for (int i = 0; i < operatorsToVisit.length; i++) {
             try {
               Socket operatorSocket = new Socket(getAddress(operatorsToVisit[i]), getPort(operatorsToVisit[i]));
 
@@ -70,6 +77,37 @@ public class Router {
 
             } finally {
               operatorSocket.close();
+            }
+          }*/
+
+          Socket[] operatorSockets = new Socket[operators.length];
+          for (int i = 0; i < operators.length; i++) {
+            try {
+              operatorSockets[i] = new Socket(operators[i].address, operators[i].port);
+            } catch (Exception e) {
+              System.out.println(e);
+            }
+          }
+
+          for (int i = 0; i < operatorsToVisit.length; i++) {
+            try {
+              int socketInd = getInd(operatorsToVisit[i]);
+              PrintWriter out = new PrintWriter(operatorSockets[socketInd].getOutputStream(), true);
+              BufferedReader in = new BufferedReader(new InputStreamReader(operatorSockets[socketInd].getInputStream()));
+
+              out.println(data);
+              data = in.readLine();
+
+            } catch (Exception e) {
+              System.out.println(e);
+            }
+          }
+
+          for (int i = 0; i < operators.length; i++) {
+            try {
+              operatorSockets[i].close();
+            } catch (Exception e) {
+              System.out.println(e);
             }
           }
 
