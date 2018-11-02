@@ -40,10 +40,13 @@ public class Router {
           BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
           //out.println(new Date().toString());
           String inputData = input.readLine();
-          String data = inputData.substring(5, 13);
-          String[] operatorsToVisit = inputData.substring(18).split(",");
+          String data = inputData.substring(5, inputData.indexOf(" "));
+          String[] operatorsToVisit = inputData.substring(inputData.indexOf("OPS:") + 4).split(",");
           System.out.println("data: " + data);
-          System.out.println("operatorsToVisit: " + operatorsToVisit.toString());
+          System.out.print("operatorsToVisit: ");
+          for (int i = 0; i < operatorsToVisit.length; i++) {
+            System.out.print(operatorsToVisit[i] + " ");
+          }
         } finally {
           socket.close();
         }
