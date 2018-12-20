@@ -37,6 +37,8 @@ public class LoadBalancer {
 
         ArrayList<Integer>numbers = new ArrayList<Integer>();
         ArrayList<String>functions = new ArrayList<String>();
+        ArrayList<Integer>occs = new ArrayList<Integer>();
+        ArrayList<Integer>capacity = new ArrayList<Integer>();
         ServerSocket listener = new ServerSocket(bindPort);
         try {
             while (true) {
@@ -50,15 +52,15 @@ public class LoadBalancer {
                     String[] formatedInputData1 = inputData1[1].split(",");
                     String[] formatedInputData2 = inputData2[1].split(",");
 
-                    if (inputData1.equals("DATA")){
-                        for (int i = 1; i < formatedInputData1.length; i++)
+                    if (inputData1[0].equals("DATA")){
+                        for (int i = 0; i < formatedInputData1.length; i++)
                             numbers.add(new Integer(Integer.parseInt(formatedInputData1[i])));
-                        for (int i = 1; i < formatedInputData2.length; i++)
+                        for (int i = 0; i < formatedInputData2.length; i++)
                             functions.add(new String(formatedInputData2[i]));
                     } else {
-                        for (int i = 1; i < formatedInputData2.length; i++)
+                        for (int i = 0; i < formatedInputData2.length; i++)
                             numbers.add(new Integer(Integer.parseInt(formatedInputData2[i])));
-                        for (int i = 1; i < formatedInputData1.length; i++)
+                        for (int i = 0; i < formatedInputData1.length; i++)
                             functions.add(new String(formatedInputData1[i]));
                     }
 
@@ -80,14 +82,32 @@ public class LoadBalancer {
 
                             out.println(OPERATOR_GET_OCC);
                             String occ = in.readLine();
-                            System.out.println(i + " --> " + occ);
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
+                            occs.add(Integer.parseInt(occ.split(":")[1]));
+                        } catch (Exception e) { 
+                            //e.printStackTrace();
+                            System.out.println("Reconnecting to operator " + i);
+                            i--;
                         } finally {
+                            if (operatorSocket != null)
                             operatorSocket.close();
                         }
                     }
+
+                    int totalCapacity = 0;
+                    double pDenominator = 0;
+                    for (int i = 0; i < occs.size(); i++)
+                        pDenominator += (double)1 / (occs.get(i) + 1);    
+                    for (int i = 0; i < occs.size(); i++){
+                        double pNumerator = (double)1 / (occs.get(i) + 1);
+                        double p = pNumerator / pDenominator;
+                        double curCapacity = Math.floor(numbers.size() * p);
+                        capacity.add((int)curCapacity);
+                        totalCapacity += (int)curCapacity;
+                    }
+                    
+                    capacity.set(0, numbers.size() - totalCapacity + capacity.get(0));
+                    for (int i = 0; i < capacity.size(); i++)
+                        System.out.println(capacity.get(i));
 
                 } finally {
                     socket.close();
