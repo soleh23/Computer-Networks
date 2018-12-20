@@ -34,6 +34,48 @@ public class LoadBalancer {
 
         //for (int i = 0; i < operators.size(); i++)
         //    System.out.println(operators.get(i).address + ":" + operators.get(i).port);
-    }
 
+        ArrayList<Integer>numbers = new ArrayList<Integer>();
+        ArrayList<String>functions = new ArrayList<String>();
+        ServerSocket listener = new ServerSocket(bindPort);
+        try {
+            while (true) {
+                Socket socket = listener.accept();
+                try {
+                    BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                    
+                    String[] inputData1 = input.readLine().split(":");
+                    String[] inputData2 = input.readLine().split(":");
+
+                    String[] formatedInputData1 = inputData1[1].split(",");
+                    String[] formatedInputData2 = inputData2[1].split(",");
+
+                    if (inputData1.equals("DATA")){
+                        for (int i = 1; i < formatedInputData1.length; i++)
+                            numbers.add(new Integer(Integer.parseInt(formatedInputData1[i])));
+                        for (int i = 1; i < formatedInputData2.length; i++)
+                            functions.add(new String(formatedInputData2[i]));
+                    } else {
+                        for (int i = 1; i < formatedInputData2.length; i++)
+                            numbers.add(new Integer(Integer.parseInt(formatedInputData2[i])));
+                        for (int i = 1; i < formatedInputData1.length; i++)
+                            functions.add(new String(formatedInputData1[i]));
+                    }
+
+                    //System.out.println("NUMBERS:");
+                    //for (int i = 0; i < numbers.size(); i++)
+                    //    System.out.print(numbers.get(i) + " ");
+                    //System.out.println("\nFUNCTIONS:");
+                    //for (int i = 0; i < functions.size(); i++)
+                    //    System.out.print(functions.get(i) + " ");
+
+                } finally {
+                    socket.close();
+                }
+            }
+        }
+        finally {
+            listener.close();
+        }
+    }
 }

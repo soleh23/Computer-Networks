@@ -47,12 +47,15 @@ message_numbers = ("DATA:%s\n" % numbers).encode("utf-8")
 message_funcs = ("FUNCS:%s\n" % "f2,f1,f3,f1").encode("utf-8")
 
 # Decide whether to send numbers or functions first
-if random.random() > 0.5:
-    s.sendall(message_numbers)
-    s.sendall(message_funcs)
-else:
-    s.sendall(message_funcs)
-    s.sendall(message_numbers)
+#if random.random() > 0.5:
+#    s.sendall(message_numbers)
+#    s.sendall(message_funcs)
+#else:
+#    s.sendall(message_funcs)
+#    s.sendall(message_numbers)
+
+s.sendall(message_funcs)
+s.sendall(message_numbers)
 
 # =============================================================================
 #                               Error checking
