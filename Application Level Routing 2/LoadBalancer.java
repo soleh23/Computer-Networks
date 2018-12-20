@@ -69,6 +69,26 @@ public class LoadBalancer {
                     //for (int i = 0; i < functions.size(); i++)
                     //    System.out.print(functions.get(i) + " ");
 
+                    Socket operatorSocket = null;
+                    final String OPERATOR_GET_OCC = "GETOCC:\n";
+                    for (int i = 0; i < operators.size(); i++) {
+                        try {
+                            operatorSocket = new Socket(operators.get(i).address, operators.get(i).port);
+
+                            PrintWriter out = new PrintWriter(operatorSocket.getOutputStream(), true);
+                            BufferedReader in = new BufferedReader(new InputStreamReader(operatorSocket.getInputStream()));
+
+                            out.println(OPERATOR_GET_OCC);
+                            String occ = in.readLine();
+                            System.out.println(i + " --> " + occ);
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        } finally {
+                            operatorSocket.close();
+                        }
+                    }
+
                 } finally {
                     socket.close();
                 }
