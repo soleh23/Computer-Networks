@@ -39,6 +39,7 @@ public class LoadBalancer {
         ArrayList<String>functions = new ArrayList<String>();
         ArrayList<Integer>occs = new ArrayList<Integer>();
         ArrayList<Integer>capacity = new ArrayList<Integer>();
+        ArrayList<Integer>resultData = new ArrayList<Integer>();
         ServerSocket listener = new ServerSocket(bindPort);
         try {
             while (true) {
@@ -71,26 +72,25 @@ public class LoadBalancer {
                     //for (int i = 0; i < functions.size(); i++)
                     //    System.out.print(functions.get(i) + " ");
 
-                    Socket operatorSocket = null;
-                    final String OPERATOR_GET_OCC = "GETOCC:\n";
+                    Socket[] operatorSocket = new Socket[operators.size()];
+                    PrintWriter[] out = new PrintWriter[operators.size()];
+                    BufferedReader[] in = new BufferedReader[operators.size()];
+                    final String OPERATOR_GET_OCC = "GETOCC:";
                     for (int i = 0; i < operators.size(); i++) {
                         try {
-                            operatorSocket = new Socket(operators.get(i).address, operators.get(i).port);
+                            operatorSocket[i] = new Socket(operators.get(i).address, operators.get(i).port);
 
-                            PrintWriter out = new PrintWriter(operatorSocket.getOutputStream(), true);
-                            BufferedReader in = new BufferedReader(new InputStreamReader(operatorSocket.getInputStream()));
+                            out[i] = new PrintWriter(operatorSocket[i].getOutputStream(), true);
+                            in[i] = new BufferedReader(new InputStreamReader(operatorSocket[i].getInputStream()));
 
-                            out.println(OPERATOR_GET_OCC);
-                            String occ = in.readLine();
+                            out[i].println(OPERATOR_GET_OCC);
+                            String occ = in[i].readLine();
                             occs.add(Integer.parseInt(occ.split(":")[1]));
                         } catch (Exception e) { 
                             //e.printStackTrace();
-                            System.out.println("Reconnecting to operator " + i);
+                            //System.out.println("Reconnecting to operator " + i);
                             i--;
-                        } finally {
-                            if (operatorSocket != null)
-                            operatorSocket.close();
-                        }
+                        } 
                     }
 
                     int totalCapacity = 0;
@@ -101,14 +101,70 @@ public class LoadBalancer {
                         double pNumerator = (double)1 / (occs.get(i) + 1);
                         double p = pNumerator / pDenominator;
                         double curCapacity = Math.floor(numbers.size() * p);
-                        capacity.add((int)curCapacity);
+                        capacity.add(new Integer((int)curCapacity));
                         totalCapacity += (int)curCapacity;
                     }
                     
                     capacity.set(0, numbers.size() - totalCapacity + capacity.get(0));
-                    for (int i = 0; i < capacity.size(); i++)
-                        System.out.println(capacity.get(i));
+                    
+                    //for (int i = 0; i < capacity.size(); i++)
+                        //System.out.println(capacity.get(i));
+                    
+                    for (int i = 0; i < numbers.size(); i++)
+                        resultData.add(numbers.get(i));
 
+                    final String OPERATOR_END = "END:";
+                    for (int i = 0; i < functions.size(); i++){
+                        String toSendFunc = "FUNCS:" + functions.get(i);
+                        int startIndex = 0;
+                        for (int j = 0; j < operators.size(); j++){
+                            try {
+                                if (capacity.get(j) > 0){
+                                    String toSendData = "DATA:";
+                                    for (int k = startIndex; k < startIndex + capacity.get(j).intValue() - 1; k++)
+                                        toSendData += resultData.get(k) + ",";
+                                    toSendData += resultData.get(startIndex + capacity.get(j).intValue() - 1);
+
+                                    out[j].println(toSendData);
+                                    out[j].println(toSendFunc);
+
+                                    startIndex += capacity.get(j).intValue();
+                                }
+                            } catch (Exception e) { 
+                                e.printStackTrace();
+                            } 
+                        }
+                        startIndex = 0;
+                        for (int j = 0; j < operators.size(); j++){
+                            try {
+                                if (capacity.get(j) > 0){
+                                    String[] response = in[j].readLine().split(":")[1].split(",");
+                                    
+                                    if (i == functions.size() - 1)
+                                        out[j].println(OPERATOR_END);
+                                    
+                                    for (int k = startIndex; k < startIndex + capacity.get(j).intValue(); k++){
+                                        resultData.set(k, new Integer(Integer.parseInt(response[k - startIndex])));
+                                    }
+
+                                    startIndex += capacity.get(j).intValue();
+                                }
+                            } catch (Exception e) {
+                                e.printStackTrace();
+                            } finally {
+                                if (operatorSocket[j] != null && i == functions.size() - 1)
+                                    operatorSocket[j].close();
+                            }
+                        }
+                    }
+
+                    String resultDataToSend = "DATA:";
+                    for (int i = 0; i < resultData.size() - 1; i++)
+                        resultDataToSend += resultData.get(i) + ",";
+                    resultDataToSend += resultData.get(resultData.size() - 1); 
+                    
+                    PrintWriter resultOut = new PrintWriter(socket.getOutputStream(), true);
+                    resultOut.println(resultDataToSend);
                 } finally {
                     socket.close();
                 }
